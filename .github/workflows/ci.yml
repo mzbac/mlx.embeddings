@@ -22,4 +22,4 @@ jobs:
       - name: Build and test
         run: |
           xcodebuild -resolvePackageDependencies
-          xcodebuild test -scheme mlx.embeddings -destination 'platform=macOS' -skipPackagePluginValidation ENABLE_PLUGIN_PREPAREMLSHADERS=YES
+          xcodebuild test -scheme mlx_embeddings -destination 'platform=macOS' -skipPackagePluginValidation ENABLE_PLUGIN_PREPAREMLSHADERS=YES
