@@ -58,8 +58,8 @@ private class ModelTypeRegistry: @unchecked Sendable {
         "distilbert": {
             url in
             let configuration = try JSONDecoder().decode(
-                BertConfiguration.self, from: Data(contentsOf: url))
-            let model = BertModel(configuration)
+                DistilBertConfiguration.self, from: Data(contentsOf: url))
+            let model = DistilBertModel(configuration)
             return model
         },
     ]

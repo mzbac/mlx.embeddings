@@ -271,7 +271,8 @@ public class BertModel: Module, EmbeddingModel {
       if key.contains("position_ids") {
         continue
       } else {
-        sanitizedWeights[key] = value
+        let sanitizedKey = key.replacingOccurrences(of: "bert.", with: "")
+        sanitizedWeights[sanitizedKey] = value
       }
     }
     return sanitizedWeights

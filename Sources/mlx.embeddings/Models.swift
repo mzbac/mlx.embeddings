@@ -101,8 +101,6 @@ extension ModelConfiguration {
     public static let multilingual_e5_small = ModelConfiguration(
         id: "intfloat/multilingual-e5-small")
     public static let bge_base = ModelConfiguration(id: "BAAI/bge-base-en-v1.5")
-    public static let nomic_text_v1 = ModelConfiguration(id: "nomic-ai/nomic-embed-text-v1")
-    public static let nomic_text_v1_5 = ModelConfiguration(id: "nomic-ai/nomic-embed-text-v1.5")
     public static let bge_large = ModelConfiguration(id: "BAAI/bge-large-en-v1.5")
     public static let snowflake_lg = ModelConfiguration(id: "Snowflake/snowflake-arctic-embed-l")
     public static let bge_m3 = ModelConfiguration(id: "BAAI/bge-m3")
@@ -132,8 +130,6 @@ extension ModelConfiguration {
                 bge_small,
                 multilingual_e5_small,
                 bge_base,
-                nomic_text_v1,
-                nomic_text_v1_5,
                 bge_large,
                 snowflake_lg,
                 bge_m3,
