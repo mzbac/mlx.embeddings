@@ -19,3 +19,12 @@ public func normalizeEmbeddings(_ embeddings: MLXArray) -> MLXArray {
   let safeNormValue = MLX.maximum(normValue, MLXArray(1e-9))
   return embeddings / safeNormValue
 }
+
+public func lastTokenPooling(lastHiddenState: MLXArray, attentionMask: MLXArray) -> MLXArray {
+    let sequenceLengths = sum(attentionMask, axes: [1]) - 1
+    let batchSize = lastHiddenState.shape[0]
+    let lastTokenIndices = maximum(sequenceLengths, MLXArray(0))
+    
+    let batchIndices = MLXArray.arange(batchSize)
+    return lastHiddenState[batchIndices, lastTokenIndices]
+}

@@ -14,6 +14,8 @@ let package = Package(
     .package(url: "https://github.com/ml-explore/mlx-swift", .upToNextMinor(from: "0.21.2")),
     .package(
       url: "https://github.com/huggingface/swift-transformers", .upToNextMinor(from: "0.1.17")),
+    .package(url: "https://github.com/ml-explore/mlx-swift-examples/", branch: "main"),
+
   ],
   targets: [
     .target(
@@ -25,6 +27,7 @@ let package = Package(
         .product(name: "MLXOptimizers", package: "mlx-swift"),
         .product(name: "MLXRandom", package: "mlx-swift"),
         .product(name: "MLXLinalg", package: "mlx-swift"),
+        .product(name: "MLXLMCommon", package: "mlx-swift-examples"),
         .product(name: "Transformers", package: "swift-transformers"),
       ]),
     .testTarget(
