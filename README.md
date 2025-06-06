@@ -12,12 +12,20 @@ MLX Embeddings aims to simplify the process of working with text embeddings in S
 
 ## Features
 
-*   Load pre-trained embedding models.
-*   Generate embeddings for single texts or batches.
+*   Load pre-trained embedding models from multiple architectures
+*   Generate embeddings for single texts or batches
+*   Support for instruction-based embeddings
+*   Efficient computation on Apple Silicon
+*   Thread-safe model container for concurrent operations
 
-## Limitations
+## Supported Models
 
-- **Currently only BERT-based models are supported.** Support for other architectures may be added in the future.
+- **BERT**: Standard BERT models (e.g., `TaylorAI/bge-micro`)
+- **RoBERTa**: RoBERTa-based models  
+- **XLM-RoBERTa**: Multilingual RoBERTa models
+- **DistilBERT**: Distilled BERT models (e.g., `distilbert/distilbert-base-uncased`)
+- **Qwen2**: Qwen2 embedding models (e.g., `mlx-community/gte-Qwen2-1.5B-instruct-4bit-dwq`)
+- **Qwen3**: Qwen3 embedding models (e.g., `mlx-community/Qwen3-Embedding-0.6B-4bit-DWQ`)
 
 ## Requirements
 
@@ -55,14 +63,15 @@ let package = Package(
 
 Then run `swift build`.
 
-## Usage Example
+## Usage Examples
+
+### Basic Embeddings with BERT
 
 ```swift
 import Foundation
 import MLX
 import Tokenizers
 import mlx_embeddings
-
 
 Task {
   do {
@@ -113,9 +122,102 @@ Task {
         return (dot_product / (norm_a * norm_b)).item()
       }
       print("Similarity[0–1]:", cosine(embeddings[0], embeddings[1]))
-
     }
 
+  } catch {
+    print("Error:", error)
+  }
+}
+
+dispatchMain()
+```
+
+### Instruction-Based Embeddings with Qwen
+
+```swift
+import Foundation
+import MLX
+import Tokenizers
+import mlx_embeddings
+
+struct InstructEmbeddings {
+  static func getDetailedInstruct(task: String, query: String) -> String {
+    return "Task: \(task)\nQuery: \(query)"
+  }
+}
+
+Task {
+  do {
+    // Define task and queries
+    let task = "Given a web search query, retrieve relevant passages that answer the query"
+    let queries = [
+      "how much protein should a female eat",
+      "summit define"
+    ]
+    
+    // Define documents to compare
+    let documents = [
+      "As a general guideline, the CDC's average requirement of protein for women ages 19 to 70 is 46 grams per day.",
+      "Definition of summit for English Language Learners: the highest point of a mountain."
+    ]
+    
+    // Load Qwen3 model
+    let container = try await loadModelContainer(
+      configuration: ModelConfiguration(id: "mlx-community/Qwen3-Embedding-0.6B-4bit-DWQ")
+    )
+    
+    _ = await container.perform { model, tokenizer in
+      // Prepare instructed queries
+      let instructedQueries = queries.map { 
+        InstructEmbeddings.getDetailedInstruct(task: task, query: $0) 
+      }
+      let allInputs = instructedQueries + documents
+      
+      // Tokenize all inputs
+      let tokenized = allInputs.map {
+        tokenizer.encode(text: $0, addSpecialTokens: true)
+      }
+      
+      let maxLength = min(
+        tokenized.reduce(into: 16) { acc, elem in
+          acc = max(acc, elem.count)
+        },
+        8192  // Max context length
+      )
+      
+      let padId = tokenizer.eosTokenId ?? 0
+      let padded = stacked(
+        tokenized.map { elem in
+          MLXArray(elem + Array(repeating: padId, count: maxLength - elem.count))
+        }
+      )
+      
+      let attentionMask = padded .!= MLXArray(padId)
+      
+      // Generate embeddings
+      let output = model(
+        padded,
+        positionIds: nil,
+        tokenTypeIds: nil,
+        attentionMask: attentionMask
+      )
+      
+      let embeddings = output.textEmbeds!
+      
+      // Calculate similarities between queries and documents
+      func cosine(_ a: MLXArray, _ b: MLXArray) -> Float {
+        let dot_product = (a * b).sum()
+        let norm_a = MLX.sqrt((a * a).sum())
+        let norm_b = MLX.sqrt((b * b).sum())
+        return (dot_product / (norm_a * norm_b)).item()
+      }
+      
+      // Compare first query with first document
+      print("Query 1 - Document 1 similarity:", cosine(embeddings[0], embeddings[2]))
+      // Compare second query with second document  
+      print("Query 2 - Document 2 similarity:", cosine(embeddings[1], embeddings[3]))
+    }
+    
   } catch {
     print("Error:", error)
   }
